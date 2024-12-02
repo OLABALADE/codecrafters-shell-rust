@@ -4,6 +4,7 @@ use std::process;
 
 fn main() {
     // Uncomment this block to pass the first stage
+    let cmds = ["echo", "exit", "type"];
     loop {
         print!("$ ");
         io::stdout().flush().unwrap();
@@ -14,14 +15,16 @@ fn main() {
         stdin.read_line(&mut input).unwrap();
 
         let args: Vec<&str> = input.trim().split(" ").collect();
-        match args[0] {
-            "exit" => {
-                let code: i32 = args[1].parse().expect("Invalid code");
-                process::exit(code)
-            }
-            "echo" => {
-                for item in input[5..].chars() {
-                    print!("{item}")
+        match args[..] {
+            ["exit", code] => process::exit(code.parse::<i32>().unwrap()),
+
+            ["echo", ..] => println!("{}", args[1..].join(" ")),
+
+            ["type", cmd] => {
+                if cmds.contains(&cmd) {
+                    println!("{} is a shell builtin", cmd)
+                } else {
+                    println!("{}: not found", cmd)
                 }
             }
             _ => println!("{}: command not found", input.trim()),
