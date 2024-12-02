@@ -19,6 +19,11 @@ fn main() {
                 let code: i32 = args[1].parse().expect("Invalid code");
                 process::exit(code)
             }
+            "echo" => {
+                for item in input[5..].chars() {
+                    print!("{item}")
+                }
+            }
             _ => println!("{}: command not found", input.trim()),
         }
     }
