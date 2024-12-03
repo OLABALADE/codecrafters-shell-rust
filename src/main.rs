@@ -3,7 +3,6 @@ use std::io::{self, Write};
 use std::{env, fs, process};
 
 fn main() {
-    // Uncomment this block to pass the first stage
     let builtins = ["echo", "exit", "type"];
     let path = env::var("PATH").unwrap();
     let splits: Vec<&str> = path.as_str().split(":").collect();
@@ -27,30 +26,31 @@ fn main() {
                 if builtins.contains(&cmd) {
                     println!("{} is a shell builtin", cmd);
                 } else {
-                    search_cmd(&splits, cmd);
-                }
-            }
-            _ => println!("{}: command not found", input.trim()),
-        }
-    }
-}
-
-fn search_cmd(paths: &Vec<&str>, cmd: &str) {
-    let mut found = false;
-    'outer: for p in paths {
-        if let Ok(entries) = fs::read_dir(p) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    if entry.file_name() == cmd {
-                        found = true;
-                        println!("{} is {}", cmd, entry.path().to_str().unwrap());
-                        break 'outer;
+                    if let Some(path) = splits
+                        .iter()
+                        .find(|path| fs::metadata(format!("{}/{}", path, cmd)).is_ok())
+                    {
+                        println!("{cmd} is {path}/{cmd}")
+                    } else {
+                        println!("{cmd}: not found")
                     }
                 }
             }
+            _ => {
+                if let Some(_) = splits
+                    .iter()
+                    .find(|path| fs::metadata(format!("{}/{}", path, args[0])).is_ok())
+                {
+                    let output = process::Command::new(args[0])
+                        .args(&args[1..])
+                        .output()
+                        .expect("Failed to process command");
+
+                    println!("{}", String::from_utf8_lossy(&output.stdout).trim())
+                } else {
+                    println!("{}: command not found", input.trim());
+                }
+            }
         }
-    }
-    if !found {
-        println!("{}: not found", cmd)
     }
 }
