@@ -1,10 +1,13 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::process;
+use std::{env, fs, process};
 
 fn main() {
     // Uncomment this block to pass the first stage
-    let cmds = ["echo", "exit", "type"];
+    let builtins = ["echo", "exit", "type"];
+    let path = env::var("PATH").unwrap();
+    let splits: Vec<&str> = path.as_str().split(":").collect();
+
     loop {
         print!("$ ");
         io::stdout().flush().unwrap();
@@ -21,13 +24,33 @@ fn main() {
             ["echo", ..] => println!("{}", args[1..].join(" ")),
 
             ["type", cmd] => {
-                if cmds.contains(&cmd) {
-                    println!("{} is a shell builtin", cmd)
+                if builtins.contains(&cmd) {
+                    println!("{} is a shell builtin", cmd);
                 } else {
-                    println!("{}: not found", cmd)
+                    search_cmd(&splits, cmd);
                 }
             }
             _ => println!("{}: command not found", input.trim()),
         }
+    }
+}
+
+fn search_cmd(paths: &Vec<&str>, cmd: &str) {
+    let mut found = false;
+    'outer: for p in paths {
+        if let Ok(entries) = fs::read_dir(p) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    if entry.file_name() == cmd {
+                        found = true;
+                        println!("{} is {}", cmd, entry.path().to_str().unwrap());
+                        break 'outer;
+                    }
+                }
+            }
+        }
+    }
+    if !found {
+        println!("{}: not found", cmd)
     }
 }
