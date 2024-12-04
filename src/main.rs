@@ -1,9 +1,9 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::{env, fs, process};
+use std::{env, fs, path::Path, process};
 
 fn main() {
-    let builtins = ["echo", "exit", "type", "pwd"];
+    let builtins = ["echo", "exit", "type", "pwd", "cd"];
     let path = env::var("PATH").unwrap();
     let splits: Vec<&str> = path.as_str().split(":").collect();
 
@@ -25,6 +25,8 @@ fn main() {
             ["type", cmd] => ty(&builtins, &splits, cmd),
 
             ["pwd", ..] => pwd(),
+
+            ["cd", pat] => cd(pat),
 
             _ => check_path(&splits, &args),
         }
@@ -65,4 +67,11 @@ fn check_path(splits: &Vec<&str>, args: &Vec<&str>) {
 fn pwd() {
     let path = env::current_dir().unwrap();
     println!("{}", path.display())
+}
+
+fn cd(path: &str) {
+    let new_path = Path::new(path);
+    if !env::set_current_dir(new_path).is_ok() {
+        println!("cd: {path}: No such file or directory")
+    }
 }
