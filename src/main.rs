@@ -71,7 +71,10 @@ fn pwd() {
 
 fn cd(path: &str) {
     let new_path = Path::new(path);
-    if !env::set_current_dir(new_path).is_ok() {
+    if path == "~" {
+        let home = env::var("HOME").unwrap();
+        env::set_current_dir(home).unwrap();
+    } else if !env::set_current_dir(new_path).is_ok() {
         println!("cd: {path}: No such file or directory")
     }
 }
